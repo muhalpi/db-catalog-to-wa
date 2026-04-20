@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Katalog WA Store
 
-## Getting Started
+Starter web katalog untuk jualan item digital (premium, pulsa, token listrik) dengan alur:
 
-First, run the development server:
+`Pilih produk -> Isi checkout -> Kirim ke WhatsApp admin`
+
+Tidak memakai payment gateway. Checkout akan membuka WhatsApp dengan detail order otomatis.
+
+## Fitur
+
+- Katalog produk dengan tombol tambah/kurang quantity
+- Keranjang dan total belanja
+- Keranjang tersimpan di `localStorage`
+- Form checkout dinamis sesuai jenis produk dalam cart
+- Generate pesan checkout ke `wa.me`
+
+## Setup Lokal
+
+1. Install dependency
+
+```bash
+npm install
+```
+
+2. Copy file env
+
+```bash
+cp .env.example .env.local
+```
+
+3. Isi nomor WhatsApp admin di `.env.local`
+
+```env
+NEXT_PUBLIC_WHATSAPP_NUMBER=6281234567890
+```
+
+4. Jalankan project
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Buka [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deploy ke Vercel
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Push repo ke GitHub
+2. Import project ke Vercel
+3. Tambahkan Environment Variable:
+- `NEXT_PUBLIC_WHATSAPP_NUMBER`
+4. Deploy
 
-## Learn More
+## Catatan Pengembangan
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Semua data produk sekarang terpusat di `src/data/catalog.ts`
+- Edit `src/data/catalog.ts` untuk tambah/hapus item
+- Edit `src/data/catalog.ts` untuk ubah harga
+- Edit `src/data/catalog.ts` untuk ubah varian/nominal/provider
+- Edit `src/data/catalog.ts` untuk ubah status tersedia (`isAvailable`)
+- Edit `src/data/catalog.ts` untuk atur promo:
+- `promoPrice` untuk harga promo
+- `promoLabel` untuk label promo (opsional)
+- `promoStart` untuk tanggal mulai promo (opsional)
+- `promoEnd` untuk tanggal akhir promo (opsional)
+- Contoh format tanggal: `2026-05-01T00:00:00+07:00`
+- Kalau ingin rekap order, bisa tambah endpoint `/api/order` untuk simpan ke Google Sheets
