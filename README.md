@@ -17,6 +17,7 @@ Project ini pakai Next.js (App Router), Neon Postgres untuk penyimpanan katalog 
 - Dark mode + toggle switch di buyer
 - Admin login (`/admin/login`) + editor katalog (`/admin`)
 - Editor produk mode daftar/detail, termasuk varian, nominal, promo, jadwal promo, status aktif
+- Import katalog via file Excel (`.xlsx`) + download template import
 - Data katalog dibaca dari database (fallback ke `src/data/catalog.ts` jika `DATABASE_URL` belum ada)
 
 ## Tech Stack
@@ -93,6 +94,27 @@ npm run dev
   - `PUT /api/admin/catalog`
 - Saat pertama kali jalan, tabel `catalog_configs` akan dibuat otomatis jika belum ada.
 - Jika `DATABASE_URL` kosong, aplikasi fallback ke data lokal `src/data/catalog.ts`.
+
+## Import Katalog dari XLSX
+
+Di halaman admin (`/admin`), tersedia panel **Import XLSX**:
+
+1. Klik **Download Template**
+2. Isi file Excel sesuai struktur
+3. Klik **Pilih File XLSX** untuk import
+4. Cek hasil di editor
+5. Klik **Simpan Katalog** untuk commit ke database
+
+Sheet yang dipakai:
+
+- `Products`
+- `Entries`
+- `PulsaEntries`
+
+Catatan:
+
+- Import akan mengganti data yang sedang ada di editor.
+- Import tidak langsung menyimpan ke database sebelum klik **Simpan Katalog**.
 
 ## Script Penting
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useRef, useState } from "react";
+import { type ChangeEvent, Fragment, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type {
   NominalOption,
@@ -9,6 +9,10 @@ import type {
   Requirement,
   VariantOption,
 } from "@/data/catalog";
+import {
+  downloadCatalogImportTemplate,
+  importCatalogFromWorkbookBuffer,
+} from "@/lib/catalog-xlsx";
 
 type Props = {
   initialProducts: Product[];
@@ -203,6 +207,7 @@ export function CatalogAdminEditor({
   const collapseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isReloading, setIsReloading] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const [termsDraftByProduct, setTermsDraftByProduct] = useState<
     Record<string, string>
   >({});
@@ -290,6 +295,59 @@ export function CatalogAdminEditor({
       setStatusMessage("Katalog terbaru berhasil dimuat.");
     } finally {
       setIsReloading(false);
+    }
+  }
+
+  async function handleImportFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file) {
+      return;
+    }
+
+    const isXlsxFile = file.name.toLowerCase().endsWith(".xlsx");
+    if (!isXlsxFile) {
+      setErrorMessage("Format file tidak didukung. Gunakan file .xlsx.");
+      setStatusMessage("");
+      return;
+    }
+
+    setIsImporting(true);
+    setErrorMessage("");
+    setStatusMessage("");
+
+    try {
+      const buffer = await file.arrayBuffer();
+      const importedProducts = importCatalogFromWorkbookBuffer(buffer);
+
+      setProducts(importedProducts);
+      setTermsDraftByProduct({});
+      setActiveProductIndex(0);
+      setExpandedPricingProductIndex(null);
+      setCollapsingPricingProductIndex(null);
+      setEditorMode("list");
+      setStatusMessage(
+        `Import berhasil: ${importedProducts.length} produk dimuat ke editor. Cek data lalu klik "Simpan Katalog".`,
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Gagal membaca file XLSX.";
+      setErrorMessage(message);
+    } finally {
+      setIsImporting(false);
+    }
+  }
+
+  function handleDownloadTemplate() {
+    setErrorMessage("");
+    setStatusMessage("");
+
+    try {
+      downloadCatalogImportTemplate();
+      setStatusMessage("Template XLSX berhasil diunduh.");
+    } catch {
+      setErrorMessage("Gagal mengunduh template XLSX.");
     }
   }
 
@@ -431,6 +489,39 @@ export function CatalogAdminEditor({
           >
             + Produk Pulsa/Data
           </button>
+        </div>
+
+        <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+            Import XLSX
+          </p>
+          <p className="mt-1 text-xs text-slate-500">
+            Upload file `.xlsx` untuk replace data editor. Format sheet:
+            `Products`, `Entries`, dan `PulsaEntries`.
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <label className="cursor-pointer rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100">
+              {isImporting ? "Mengimpor..." : "Pilih File XLSX"}
+              <input
+                type="file"
+                accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                onChange={handleImportFileChange}
+                disabled={isImporting}
+                className="hidden"
+              />
+            </label>
+            <button
+              type="button"
+              onClick={handleDownloadTemplate}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+            >
+              Download Template
+            </button>
+          </div>
+          <p className="mt-2 text-xs text-slate-500">
+            Import tidak langsung tersimpan ke database. Tetap klik tombol
+            `Simpan Katalog` setelah data dicek.
+          </p>
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
