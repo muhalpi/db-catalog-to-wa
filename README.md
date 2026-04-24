@@ -1,20 +1,38 @@
-# Katalog WA Store
+# DB Catalog to WA
 
-Starter web katalog untuk jualan item digital (premium, pulsa, token listrik) dengan alur:
+Web katalog produk digital dengan alur:
 
-`Pilih produk -> Isi checkout -> Kirim ke WhatsApp admin`
+`Pilih produk -> tambah ke keranjang -> isi form checkout -> kirim detail order ke WhatsApp`
 
-Tidak memakai payment gateway. Checkout akan membuka WhatsApp dengan detail order otomatis.
+Project ini pakai Next.js (App Router), Neon Postgres untuk penyimpanan katalog admin, dan tanpa payment gateway.
 
-## Fitur
+## Fitur Utama
 
-- Katalog produk dengan tombol tambah/kurang quantity
-- Keranjang dan total belanja
-- Keranjang tersimpan di `localStorage`
-- Form checkout dinamis sesuai jenis produk dalam cart
-- Generate pesan checkout ke `wa.me`
+- Katalog buyer dengan filter kategori + pencarian
+- Urutan produk otomatis: kategori lalu nama (A-Z)
+- Quantity stepper + ringkasan keranjang
+- Tombol hapus item dari keranjang
+- Checkout langsung ke WhatsApp admin dengan format pesan otomatis
+- Halaman detail produk (`/produk/[id]`) untuk S&K + checkout
+- Dark mode + toggle switch di buyer
+- Admin login (`/admin/login`) + editor katalog (`/admin`)
+- Editor produk mode daftar/detail, termasuk varian, nominal, promo, jadwal promo, status aktif
+- Data katalog dibaca dari database (fallback ke `src/data/catalog.ts` jika `DATABASE_URL` belum ada)
 
-## Setup Lokal
+## Tech Stack
+
+- Next.js 16
+- React 19
+- Tailwind CSS 4
+- PostgreSQL (Neon) via `pg`
+
+## Prasyarat
+
+- Node.js 20+ (disarankan LTS terbaru)
+- npm 10+
+- Database PostgreSQL (Neon)
+
+## Instalasi Lokal
 
 1. Install dependency
 
@@ -22,45 +40,103 @@ Tidak memakai payment gateway. Checkout akan membuka WhatsApp dengan detail orde
 npm install
 ```
 
-2. Copy file env
+2. Buat file environment
+
+macOS/Linux:
 
 ```bash
 cp .env.example .env.local
 ```
 
-3. Isi nomor WhatsApp admin di `.env.local`
+Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env.local
+```
+
+3. Isi value di `.env.local`
 
 ```env
 NEXT_PUBLIC_WHATSAPP_NUMBER=6281234567890
+ADMIN_PASSWORD=isi_password_admin
+ADMIN_SESSION_SECRET=isi_secret_panjang_acak
+DATABASE_URL=postgres://username:password@host.neon.tech/dbname?sslmode=verify-full
 ```
 
-4. Jalankan project
+4. Jalankan development server
 
 ```bash
 npm run dev
 ```
 
-5. Buka [http://localhost:3000](http://localhost:3000)
+5. Buka:
+
+- Buyer: [http://localhost:3000](http://localhost:3000)
+- Admin login: [http://localhost:3000/admin/login](http://localhost:3000/admin/login)
+
+## Environment Variables
+
+- `NEXT_PUBLIC_WHATSAPP_NUMBER`:
+  nomor WhatsApp tujuan checkout (format internasional, tanpa `+`).
+- `ADMIN_PASSWORD`:
+  password login admin.
+- `ADMIN_SESSION_SECRET`:
+  secret untuk sign cookie sesi admin.
+- `DATABASE_URL`:
+  koneksi PostgreSQL/Neon untuk simpan katalog.
+
+## Cara Kerja Data Katalog
+
+- Endpoint publik buyer: `GET /api/catalog`
+- Endpoint admin katalog:
+  - `GET /api/admin/catalog`
+  - `PUT /api/admin/catalog`
+- Saat pertama kali jalan, tabel `catalog_configs` akan dibuat otomatis jika belum ada.
+- Jika `DATABASE_URL` kosong, aplikasi fallback ke data lokal `src/data/catalog.ts`.
+
+## Script Penting
+
+```bash
+npm run dev
+npm run lint
+npm run build
+npm run start
+```
 
 ## Deploy ke Vercel
 
-1. Push repo ke GitHub
-2. Import project ke Vercel
-3. Tambahkan Environment Variable:
-- `NEXT_PUBLIC_WHATSAPP_NUMBER`
-4. Deploy
+1. Push ke GitHub.
+2. Import repo ke Vercel.
+3. Tambahkan semua env vars:
+   - `NEXT_PUBLIC_WHATSAPP_NUMBER`
+   - `ADMIN_PASSWORD`
+   - `ADMIN_SESSION_SECRET`
+   - `DATABASE_URL`
+4. Deploy.
 
-## Catatan Pengembangan
+## Struktur Folder
 
-- Semua data produk sekarang terpusat di `src/data/catalog.ts`
-- Edit `src/data/catalog.ts` untuk tambah/hapus item
-- Edit `src/data/catalog.ts` untuk ubah harga
-- Edit `src/data/catalog.ts` untuk ubah varian/nominal/provider
-- Edit `src/data/catalog.ts` untuk ubah status tersedia (`isAvailable`)
-- Edit `src/data/catalog.ts` untuk atur promo:
-- `promoPrice` untuk harga promo
-- `promoLabel` untuk label promo (opsional)
-- `promoStart` untuk tanggal mulai promo (opsional)
-- `promoEnd` untuk tanggal akhir promo (opsional)
-- Contoh format tanggal: `2026-05-01T00:00:00+07:00`
-- Kalau ingin rekap order, bisa tambah endpoint `/api/order` untuk simpan ke Google Sheets
+```text
+src/
+  app/
+    admin/                 # halaman admin
+    api/                   # endpoint katalog + auth admin
+    produk/[id]/           # halaman detail produk buyer
+    page.tsx               # halaman utama buyer
+  components/
+    admin/                 # komponen login + editor admin
+    buyer/                 # komponen buyer (detail checkout form)
+  data/
+    catalog.ts             # seed/default katalog + type
+  lib/
+    admin-session.ts       # auth cookie admin
+    catalog-storage.ts     # load/save katalog ke DB
+```
+
+## Catatan
+
+- Tidak ada payment gateway: pembayaran tetap diproses manual lewat chat WhatsApp.
+- Untuk keamanan produksi:
+  - gunakan password admin kuat,
+  - isi `ADMIN_SESSION_SECRET` random panjang,
+  - pastikan project/environment Vercel private.

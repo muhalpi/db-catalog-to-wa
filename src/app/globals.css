@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   --background: #f4f6f8;
@@ -16,6 +17,11 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), sans-serif;
+  line-height: 1.45;
+}
+
+html {
+  font-size: 15px;
 }
 
 @keyframes cartPop {
@@ -47,4 +53,18 @@ body {
 
 .badge-pop {
   animation: badgePop 280ms ease-out;
+}
+
+.pricing-sheet-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 220ms ease,
+    opacity 220ms ease;
+}
+
+.pricing-sheet-collapse.is-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
 }
